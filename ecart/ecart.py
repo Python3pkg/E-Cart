@@ -1,9 +1,10 @@
 import redis
 import copy
 from functools import wraps
-from exception import ErrorMessage
-from decorators import raise_exception
-from serializer import Serializer
+from .exception import ErrorMessage
+from .decorators import raise_exception
+from .serializer import Serializer
+from functools import reduce
 
 TTL = 604800
 
@@ -128,7 +129,7 @@ class Cart(object):
         """
             Returns all the products and their details present in the cart as a dictionary
         """
-        return {key: Serializer.loads(value) for key, value in self.__get_raw_cart().iteritems()}
+        return {key: Serializer.loads(value) for key, value in self.__get_raw_cart().items()}
 
     @raise_exception("count can't be obtained due to Error: ")
     def count(self):
@@ -159,7 +160,7 @@ class Cart(object):
         return [Serializer.loads(product_string) for product_string in self.redis_connection.hvals(self.user_redis_key)]
 
     def __quantities(self):
-        return map(lambda product_dict: product_dict.get('quantity'), self.get_product_dicts())
+        return [product_dict.get('quantity') for product_dict in self.get_product_dicts()]
 
     @raise_exception("quantity can't be obtained due to Error: ")
     def quantity(self):
@@ -196,7 +197,7 @@ class Cart(object):
         """
             Returns the list of product's total_cost
         """
-        return map(lambda product_dict: self.__product_price(product_dict), self.get_product_dicts())
+        return [self.__product_price(product_dict) for product_dict in self.get_product_dicts()]
 
     def __del__(self):
         """
